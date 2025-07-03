@@ -5,83 +5,122 @@
   <title>Active.sav Editor</title>
   <style>
     body { font-family: sans-serif; padding: 20px; }
-    input[type="number"] { width: 80px; }
-    label { display: block; margin-top: 10px; }
+    label { display: block; margin: 10px 0 5px; }
+    select, input[type="file"], button { padding: 5px; }
   </style>
 </head>
 <body>
-  <h1>🎮 Active.sav Editor</h1>
+  <h1>🎮 Active.sav Save Editor</h1>
   <input type="file" id="fileInput"><br><br>
 
   <div id="editor" style="display:none;">
-    <label>BattleFPS: <input type="number" id="battleFPS"></label>
-    <label>LobbyFPS: <input type="number" id="lobbyFPS"></label>
-    <label>FPSLevel: <input type="number" id="fpsLevel"></label>
-    <label>GraphicsLevel: <input type="number" id="graphicsLevel"></label>
-    <br>
-    <button onclick="saveFile()">💾 Save Edited File</button>
+    <label>🎮 FPS:</label>
+    <select id="fps">
+      <option value="">-- Bỏ qua --</option>
+      <option value="1">1 - Low</option>
+      <option value="2">2 - Medium</option>
+      <option value="3">3 - High</option>
+      <option value="4">4 - Ultra</option>
+    </select>
+
+    <label>🖼️ Đồ hoạ:</label>
+    <select id="quality">
+      <option value="">-- Bỏ qua --</option>
+      <option value="1">1 - Smooth</option>
+      <option value="2">2 - Balanced</option>
+      <option value="3">3 - HD</option>
+      <option value="4">4 - UHD</option>
+    </select>
+
+    <label>🌈 Màu sắc:</label>
+    <select id="style">
+      <option value="">-- Bỏ qua --</option>
+      <option value="1">1 - Classic</option>
+      <option value="2">2 - Soft</option>
+      <option value="3">3 - Movie</option>
+      <option value="4">4 - Realistic</option>
+    </select>
+
+    <br><br>
+    <button onclick="saveFile()">💾 Lưu lại file</button>
   </div>
 
   <script>
     const KEYS = {
-      battleFPS: 'BattleFPS\u0000\u000C\u0000\u0000\u0000IntProperty',
-      lobbyFPS: 'LobbyFPS\u0000\u000C\u0000\u0000\u0000IntProperty',
-      fpsLevel:  'FPSLevel\u0000\u000C\u0000\u0000\u0000IntProperty',
-      graphicsLevel: 'GraphicsQualityLevel\u0000\u000C\u0000\u0000\u0000IntProperty'
+      fps: [
+        'BattleFPS\u0000\u000C\u0000\u0000\u0000IntProperty',
+        'LobbyFPS\u0000\u000C\u0000\u0000\u0000IntProperty',
+        'FPSLevel\u0000\u000C\u0000\u0000\u0000IntProperty',
+      ],
+      quality: [
+        'LobbyRenderQuality\u0000\u000C\u0000\u0000\u0000IntProperty',
+        'BattleRenderQuality\u0000\u000C\u0000\u0000\u0000IntProperty',
+      ],
+      style: [
+        'LobbyRenderStyle\u0000\u000C\u0000\u0000\u0000IntProperty',
+        'BattleRenderStyle\u0000\u000C\u0000\u0000\u0000IntProperty',
+      ]
     };
 
     let buffer, view;
 
-    document.getElementById('fileInput').addEventListener('change', function(e) {
+    document.getElementById('fileInput').addEventListener('change', function (e) {
       const file = e.target.files[0];
       const reader = new FileReader();
-      reader.onload = function(event) {
+      reader.onload = function (event) {
         buffer = event.target.result;
         view = new DataView(buffer);
-
-        for (let [id, key] of Object.entries(KEYS)) {
-          const offset = findKeyOffset(buffer, key);
-          if (offset !== -1) {
-            const value = view.getInt32(offset + key.length, true);
-            document.getElementById(id).value = value;
-          }
-        }
-
         document.getElementById('editor').style.display = 'block';
       };
       reader.readAsArrayBuffer(file);
     });
 
-    function findKeyOffset(buffer, keyStr) {
-      const bytes = new TextEncoder().encode(keyStr);
-      const arr = new Uint8Array(buffer);
-      for (let i = 0; i < arr.length - bytes.length; i++) {
-        let found = true;
-        for (let j = 0; j < bytes.length; j++) {
-          if (arr[i + j] !== bytes[j]) {
-            found = false;
-            break;
+    function findAndPatchKeys(keyList, value) {
+      let count = 0;
+      const uint8 = new Uint8Array(buffer);
+      for (let key of keyList) {
+        const keyBytes = new TextEncoder().encode(key);
+        const index = findBytes(uint8, keyBytes);
+        if (index !== -1) {
+          const yOffset = key.indexOf("IntProperty") + "IntProperty".length - 1;
+          const patchIndex = index + yOffset + 11;
+          if (patchIndex < buffer.byteLength) {
+            view.setUint8(patchIndex, value);
+            count++;
           }
         }
-        if (found) return i;
+      }
+      return count;
+    }
+
+    function findBytes(haystack, needle) {
+      outer: for (let i = 0; i <= haystack.length - needle.length; i++) {
+        for (let j = 0; j < needle.length; j++) {
+          if (haystack[i + j] !== needle[j]) {
+            continue outer;
+          }
+        }
+        return i;
       }
       return -1;
     }
 
     function saveFile() {
-      for (let [id, key] of Object.entries(KEYS)) {
-        const offset = findKeyOffset(buffer, key);
-        if (offset !== -1) {
-          const newVal = parseInt(document.getElementById(id).value);
-          view.setInt32(offset + key.length, newVal, true);
-        }
-      }
+      let changed = 0;
+      const fps = parseInt(document.getElementById('fps').value);
+      const quality = parseInt(document.getElementById('quality').value);
+      const style = parseInt(document.getElementById('style').value);
+
+      if (!isNaN(fps)) changed += findAndPatchKeys(KEYS.fps, fps);
+      if (!isNaN(quality)) changed += findAndPatchKeys(KEYS.quality, quality);
+      if (!isNaN(style)) changed += findAndPatchKeys(KEYS.style, style);
 
       const blob = new Blob([buffer], { type: 'application/octet-stream' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = 'Active_edited.sav';
       a.click();
+      alert(`✅ Đã chỉnh sửa ${changed} mục trong file.`);
     }
   </script>
 </body>
