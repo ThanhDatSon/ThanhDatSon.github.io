@@ -5,68 +5,72 @@
   <title>Active.sav Save Editor</title>
   <style>
     body { font-family: sans-serif; padding: 20px; }
-    label, select, button, input { margin-top: 10px; display: block; padding: 6px; }
+    .section { margin-bottom: 15px; }
+    label { font-weight: bold; margin-top: 10px; display: block; }
+    select, input[type="file"], button { padding: 6px; margin-top: 5px; display: block; width: 100%; max-width: 300px; }
   </style>
 </head>
 <body>
-  <h2>🎮 Active.sav Editor</h2>
+  <h2>🎮 Active.sav Editor (Giao diện chia mục)</h2>
 
-  <input type="file" id="fileInput"><br>
+  <div class="section">
+    <label>📁 Tải lên file Active.sav:</label>
+    <input type="file" id="fileInput">
+  </div>
 
-  <label>🔢 Chọn chế độ chỉnh sửa:</label>
-  <select id="mode" onchange="updateOptions()">
-    <option value="">-- Chọn --</option>
-    <option value="1">1 - FPS</option>
-    <option value="2">2 - Đồ hoạ</option>
-    <option value="3">3 - Màu sắc</option>
-  </select>
+  <div class="section">
+    <label>⚙️ FPS:</label>
+    <select id="fpsSelect">
+      <option value="">-- Không chỉnh --</option>
+      <option value="4">30 FPS</option>
+      <option value="5">40 FPS</option>
+      <option value="6">60 FPS</option>
+      <option value="7">90 FPS</option>
+      <option value="8">120 FPS</option>
+    </select>
+  </div>
 
-  <label>📝 Chọn giá trị:</label>
-  <select id="valueSelect">
-    <option value="">-- Chọn mục bên trên trước --</option>
-  </select>
+  <div class="section">
+    <label>🖼️ Đồ hoạ:</label>
+    <select id="qualitySelect">
+      <option value="">-- Không chỉnh --</option>
+      <option value="6">Siêu Mượt</option>
+      <option value="1">Mượt</option>
+      <option value="2">Cân Bằng</option>
+      <option value="3">HD</option>
+      <option value="4">HDR</option>
+      <option value="5">ULTRA HDR</option>
+    </select>
+  </div>
+
+  <div class="section">
+    <label>🌈 Màu sắc:</label>
+    <select id="styleSelect">
+      <option value="">-- Không chỉnh --</option>
+      <option value="1">Kinh điển</option>
+      <option value="2">Nhiều màu</option>
+      <option value="3">Điện ảnh</option>
+      <option value="4">Tự nhiên</option>
+      <option value="5">Rực rỡ</option>
+    </select>
+  </div>
 
   <button onclick="editFile()">✅ Chỉnh sửa và Tải file</button>
 
   <script>
     const KEYS = {
-      1: [ // FPS
+      fps: [
         'BattleFPS\u0000\u000C\u0000\u0000\u0000IntProperty',
         'LobbyFPS\u0000\u000C\u0000\u0000\u0000IntProperty',
         'FPSLevel\u0000\u000C\u0000\u0000\u0000IntProperty'
       ],
-      2: [ // Đồ hoạ
+      quality: [
         'LobbyRenderQuality\u0000\u000C\u0000\u0000\u0000IntProperty',
         'BattleRenderQuality\u0000\u000C\u0000\u0000\u0000IntProperty'
       ],
-      3: [ // Màu sắc
+      style: [
         'LobbyRenderStyle\u0000\u000C\u0000\u0000\u0000IntProperty',
         'BattleRenderStyle\u0000\u000C\u0000\u0000\u0000IntProperty'
-      ]
-    };
-
-    const OPTIONS = {
-      1: [ // FPS
-        { label: '30 FPS', value: 0x04 },
-        { label: '40 FPS', value: 0x05 },
-        { label: '60 FPS', value: 0x06 },
-        { label: '90 FPS', value: 0x07 },
-        { label: '120 FPS', value: 0x08 }
-      ],
-      2: [ // Đồ hoạ
-        { label: 'Siêu Mượt', value: 0x06 },
-        { label: 'Mượt', value: 0x01 },
-        { label: 'Cân Bằng', value: 0x02 },
-        { label: 'HD', value: 0x03 },
-        { label: 'HDR', value: 0x04 },
-        { label: 'ULTRA HDR', value: 0x05 }
-      ],
-      3: [ // Màu sắc
-        { label: 'Kinh điển', value: 0x01 },
-        { label: 'Nhiều màu', value: 0x02 },
-        { label: 'Điện ảnh', value: 0x03 },
-        { label: 'Tự nhiên', value: 0x04 },
-        { label: 'Rực rỡ', value: 0x05 }
       ]
     };
 
@@ -83,21 +87,6 @@
       reader.readAsArrayBuffer(file);
     });
 
-    function updateOptions() {
-      const mode = parseInt(document.getElementById("mode").value);
-      const select = document.getElementById("valueSelect");
-      select.innerHTML = '<option value="">-- Chọn giá trị --</option>';
-
-      if (OPTIONS[mode]) {
-        OPTIONS[mode].forEach(opt => {
-          const option = document.createElement("option");
-          option.value = opt.value;
-          option.textContent = opt.label;
-          select.appendChild(option);
-        });
-      }
-    }
-
     function findBytes(haystack, needle) {
       outer: for (let i = 0; i <= haystack.length - needle.length; i++) {
         for (let j = 0; j < needle.length; j++) {
@@ -108,26 +97,16 @@
       return -1;
     }
 
-    function editFile() {
-      const mode = parseInt(document.getElementById("mode").value);
-      const value = parseInt(document.getElementById("valueSelect").value);
-
-      if (!buffer || isNaN(mode) || isNaN(value)) {
-        alert("⚠️ Vui lòng chọn chế độ và giá trị.");
-        return;
-      }
-
+    function patch(keys, value) {
       const uint8 = new Uint8Array(buffer);
       let changed = 0;
 
-      for (let key of KEYS[mode]) {
+      for (let key of keys) {
         const keyBytes = new TextEncoder().encode(key);
         const index = findBytes(uint8, keyBytes);
-
         if (index !== -1) {
           const yIndex = key.indexOf("IntProperty") + "IntProperty".length - 1;
           const patchIndex = index + yIndex + 11;
-
           if (patchIndex < buffer.byteLength) {
             view.setUint8(patchIndex, value);
             changed++;
@@ -135,15 +114,34 @@
         }
       }
 
-      if (changed > 0) {
+      return changed;
+    }
+
+    function editFile() {
+      if (!buffer) {
+        alert("❗ Bạn chưa tải file Active.sav.");
+        return;
+      }
+
+      let totalChanged = 0;
+
+      const fpsVal = parseInt(document.getElementById("fpsSelect").value);
+      const qualVal = parseInt(document.getElementById("qualitySelect").value);
+      const styleVal = parseInt(document.getElementById("styleSelect").value);
+
+      if (!isNaN(fpsVal)) totalChanged += patch(KEYS.fps, fpsVal);
+      if (!isNaN(qualVal)) totalChanged += patch(KEYS.quality, qualVal);
+      if (!isNaN(styleVal)) totalChanged += patch(KEYS.style, styleVal);
+
+      if (totalChanged > 0) {
         const blob = new Blob([buffer], { type: "application/octet-stream" });
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
         a.download = "Active_edited.sav";
         a.click();
-        alert(`✅ Đã chỉnh ${changed} mục thành HEX: ${value.toString(16).toUpperCase().padStart(2, '0')}`);
+        alert(`✅ Đã chỉnh ${totalChanged} mục thành công.`);
       } else {
-        alert("❌ Không tìm thấy key phù hợp.");
+        alert("⚠️ Không có mục nào được chỉnh.");
       }
     }
   </script>
