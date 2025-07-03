@@ -2,125 +2,107 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Active.sav Editor</title>
+  <title>Active.sav Save Editor</title>
   <style>
     body { font-family: sans-serif; padding: 20px; }
-    label { display: block; margin: 10px 0 5px; }
-    select, input[type="file"], button { padding: 5px; }
+    label, select, button, input { margin-top: 10px; display: block; padding: 6px; }
   </style>
 </head>
 <body>
-  <h1>🎮 Active.sav Save Editor</h1>
-  <input type="file" id="fileInput"><br><br>
+  <h2>🎮 Active.sav Editor (Menu giống Python)</h2>
 
-  <div id="editor" style="display:none;">
-    <label>🎮 FPS:</label>
-    <select id="fps">
-      <option value="">-- Bỏ qua --</option>
-      <option value="1">1 - Low</option>
-      <option value="2">2 - Medium</option>
-      <option value="3">3 - High</option>
-      <option value="4">4 - Ultra</option>
-    </select>
+  <input type="file" id="fileInput"><br>
 
-    <label>🖼️ Đồ hoạ:</label>
-    <select id="quality">
-      <option value="">-- Bỏ qua --</option>
-      <option value="1">1 - Smooth</option>
-      <option value="2">2 - Balanced</option>
-      <option value="3">3 - HD</option>
-      <option value="4">4 - UHD</option>
-    </select>
+  <label>🔢 Chọn chế độ chỉnh sửa:</label>
+  <select id="mode">
+    <option value="">-- Chọn --</option>
+    <option value="1">1 - FPS</option>
+    <option value="2">2 - Đồ hoạ</option>
+    <option value="3">3 - Màu sắc</option>
+  </select>
 
-    <label>🌈 Màu sắc:</label>
-    <select id="style">
-      <option value="">-- Bỏ qua --</option>
-      <option value="1">1 - Classic</option>
-      <option value="2">2 - Soft</option>
-      <option value="3">3 - Movie</option>
-      <option value="4">4 - Realistic</option>
-    </select>
+  <label>📝 Nhập giá trị mới (1, 2, 3...):</label>
+  <input type="number" id="valueInput" placeholder="VD: 3">
 
-    <br><br>
-    <button onclick="saveFile()">💾 Lưu lại file</button>
-  </div>
+  <button onclick="editFile()">✅ Chỉnh sửa và Tải file</button>
 
   <script>
     const KEYS = {
-      fps: [
+      1: [ // FPS
         'BattleFPS\u0000\u000C\u0000\u0000\u0000IntProperty',
         'LobbyFPS\u0000\u000C\u0000\u0000\u0000IntProperty',
-        'FPSLevel\u0000\u000C\u0000\u0000\u0000IntProperty',
+        'FPSLevel\u0000\u000C\u0000\u0000\u0000IntProperty'
       ],
-      quality: [
+      2: [ // Đồ họa
         'LobbyRenderQuality\u0000\u000C\u0000\u0000\u0000IntProperty',
-        'BattleRenderQuality\u0000\u000C\u0000\u0000\u0000IntProperty',
+        'BattleRenderQuality\u0000\u000C\u0000\u0000\u0000IntProperty'
       ],
-      style: [
+      3: [ // Màu sắc
         'LobbyRenderStyle\u0000\u000C\u0000\u0000\u0000IntProperty',
-        'BattleRenderStyle\u0000\u000C\u0000\u0000\u0000IntProperty',
+        'BattleRenderStyle\u0000\u000C\u0000\u0000\u0000IntProperty'
       ]
     };
 
     let buffer, view;
 
-    document.getElementById('fileInput').addEventListener('change', function (e) {
+    document.getElementById("fileInput").addEventListener("change", function(e) {
       const file = e.target.files[0];
       const reader = new FileReader();
-      reader.onload = function (event) {
+      reader.onload = function(event) {
         buffer = event.target.result;
         view = new DataView(buffer);
-        document.getElementById('editor').style.display = 'block';
+        alert("✅ File đã được tải xong.");
       };
       reader.readAsArrayBuffer(file);
     });
 
-    function findAndPatchKeys(keyList, value) {
-      let count = 0;
-      const uint8 = new Uint8Array(buffer);
-      for (let key of keyList) {
-        const keyBytes = new TextEncoder().encode(key);
-        const index = findBytes(uint8, keyBytes);
-        if (index !== -1) {
-          const yOffset = key.indexOf("IntProperty") + "IntProperty".length - 1;
-          const patchIndex = index + yOffset + 11;
-          if (patchIndex < buffer.byteLength) {
-            view.setUint8(patchIndex, value);
-            count++;
-          }
-        }
-      }
-      return count;
-    }
-
     function findBytes(haystack, needle) {
       outer: for (let i = 0; i <= haystack.length - needle.length; i++) {
         for (let j = 0; j < needle.length; j++) {
-          if (haystack[i + j] !== needle[j]) {
-            continue outer;
-          }
+          if (haystack[i + j] !== needle[j]) continue outer;
         }
         return i;
       }
       return -1;
     }
 
-    function saveFile() {
+    function editFile() {
+      const mode = parseInt(document.getElementById("mode").value);
+      const value = parseInt(document.getElementById("valueInput").value);
+
+      if (!buffer || isNaN(mode) || isNaN(value)) {
+        alert("⚠️ Vui lòng chọn chế độ và nhập giá trị.");
+        return;
+      }
+
+      const uint8 = new Uint8Array(buffer);
       let changed = 0;
-      const fps = parseInt(document.getElementById('fps').value);
-      const quality = parseInt(document.getElementById('quality').value);
-      const style = parseInt(document.getElementById('style').value);
 
-      if (!isNaN(fps)) changed += findAndPatchKeys(KEYS.fps, fps);
-      if (!isNaN(quality)) changed += findAndPatchKeys(KEYS.quality, quality);
-      if (!isNaN(style)) changed += findAndPatchKeys(KEYS.style, style);
+      for (let key of KEYS[mode]) {
+        const keyBytes = new TextEncoder().encode(key);
+        const index = findBytes(uint8, keyBytes);
 
-      const blob = new Blob([buffer], { type: 'application/octet-stream' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'Active_edited.sav';
-      a.click();
-      alert(`✅ Đã chỉnh sửa ${changed} mục trong file.`);
+        if (index !== -1) {
+          const yIndex = key.indexOf("IntProperty") + "IntProperty".length - 1;
+          const patchIndex = index + yIndex + 11;
+
+          if (patchIndex < buffer.byteLength) {
+            view.setUint8(patchIndex, value);
+            changed++;
+          }
+        }
+      }
+
+      if (changed > 0) {
+        const blob = new Blob([buffer], { type: "application/octet-stream" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "Active_edited.sav";
+        a.click();
+        alert(`✅ Đã chỉnh ${changed} mục thành giá trị ${value}`);
+      } else {
+        alert("❌ Không tìm thấy key nào phù hợp.");
+      }
     }
   </script>
 </body>
