@@ -6,13 +6,25 @@
   <style>
     body {
       font-family: sans-serif;
-      background: #f0f2f5;
+      background: url('https://i.postimg.cc/ncbFH9bp/62cad26ab5bc9ed1f9615c08378e393c.jpg') no-repeat center center fixed;
+      background-size: cover;
       margin: 0;
       padding: 0;
       display: flex;
       justify-content: center;
       min-height: 100vh;
       align-items: center;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.4); /* mờ nền */
+      z-index: -1;
     }
 
     .container {
@@ -68,9 +80,7 @@
 </head>
 <body>
   <div class="container">
-    <!-- ✅ LOGO -->
     <img src="https://i.postimg.cc/MTShRq9f/IMG-20250222-175554232.jpg" alt="Logo" class="logo">
-
     <h2>Active Editor By TDx08</h2>
 
     <label>📁 Tải file Active.sav:</label>
