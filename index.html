@@ -22,12 +22,20 @@
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
       width: 90%;
       max-width: 480px;
+      text-align: center;
+    }
+
+    .logo {
+      display: block;
+      margin: 0 auto 10px auto;
+      max-width: 120px;
     }
 
     label {
       display: block;
       margin-top: 15px;
       font-weight: bold;
+      text-align: left;
     }
 
     select, button, input[type="file"] {
@@ -53,13 +61,13 @@
     }
 
     h2 {
-      text-align: center;
       margin-bottom: 20px;
     }
   </style>
 </head>
 <body>
   <div class="container">
+    <img src="logo.png" alt="Logo" class="logo">
     <h2>🎮 Active.sav Editor</h2>
 
     <label>📁 Tải file Active.sav:</label>
@@ -96,7 +104,6 @@
       <option value="5">Rực rỡ</option>
     </select>
 
-    <br><br>
     <button onclick="editFile()">✅ Chỉnh sửa & Tải về</button>
   </div>
 
