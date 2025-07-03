@@ -9,20 +9,22 @@
   </style>
 </head>
 <body>
-  <h2>🎮 Active.sav Editor (Menu giống Python)</h2>
+  <h2>🎮 Active.sav Editor</h2>
 
   <input type="file" id="fileInput"><br>
 
   <label>🔢 Chọn chế độ chỉnh sửa:</label>
-  <select id="mode">
+  <select id="mode" onchange="updateOptions()">
     <option value="">-- Chọn --</option>
     <option value="1">1 - FPS</option>
     <option value="2">2 - Đồ hoạ</option>
     <option value="3">3 - Màu sắc</option>
   </select>
 
-  <label>📝 Nhập giá trị mới (1, 2, 3...):</label>
-  <input type="number" id="valueInput" placeholder="VD: 3">
+  <label>📝 Chọn giá trị:</label>
+  <select id="valueSelect">
+    <option value="">-- Chọn mục bên trên trước --</option>
+  </select>
 
   <button onclick="editFile()">✅ Chỉnh sửa và Tải file</button>
 
@@ -33,13 +35,38 @@
         'LobbyFPS\u0000\u000C\u0000\u0000\u0000IntProperty',
         'FPSLevel\u0000\u000C\u0000\u0000\u0000IntProperty'
       ],
-      2: [ // Đồ họa
+      2: [ // Đồ hoạ
         'LobbyRenderQuality\u0000\u000C\u0000\u0000\u0000IntProperty',
         'BattleRenderQuality\u0000\u000C\u0000\u0000\u0000IntProperty'
       ],
       3: [ // Màu sắc
         'LobbyRenderStyle\u0000\u000C\u0000\u0000\u0000IntProperty',
         'BattleRenderStyle\u0000\u000C\u0000\u0000\u0000IntProperty'
+      ]
+    };
+
+    const OPTIONS = {
+      1: [ // FPS
+        { label: '30 FPS', value: 0x04 },
+        { label: '40 FPS', value: 0x05 },
+        { label: '60 FPS', value: 0x06 },
+        { label: '90 FPS', value: 0x07 },
+        { label: '120 FPS', value: 0x08 }
+      ],
+      2: [ // Đồ hoạ
+        { label: 'Siêu Mượt', value: 0x06 },
+        { label: 'Mượt', value: 0x01 },
+        { label: 'Cân Bằng', value: 0x02 },
+        { label: 'HD', value: 0x03 },
+        { label: 'HDR', value: 0x04 },
+        { label: 'ULTRA HDR', value: 0x05 }
+      ],
+      3: [ // Màu sắc
+        { label: 'Kinh điển', value: 0x01 },
+        { label: 'Nhiều màu', value: 0x02 },
+        { label: 'Điện ảnh', value: 0x03 },
+        { label: 'Tự nhiên', value: 0x04 },
+        { label: 'Rực rỡ', value: 0x05 }
       ]
     };
 
@@ -51,10 +78,25 @@
       reader.onload = function(event) {
         buffer = event.target.result;
         view = new DataView(buffer);
-        alert("✅ File đã được tải xong.");
+        alert("✅ File đã tải xong!");
       };
       reader.readAsArrayBuffer(file);
     });
+
+    function updateOptions() {
+      const mode = parseInt(document.getElementById("mode").value);
+      const select = document.getElementById("valueSelect");
+      select.innerHTML = '<option value="">-- Chọn giá trị --</option>';
+
+      if (OPTIONS[mode]) {
+        OPTIONS[mode].forEach(opt => {
+          const option = document.createElement("option");
+          option.value = opt.value;
+          option.textContent = opt.label;
+          select.appendChild(option);
+        });
+      }
+    }
 
     function findBytes(haystack, needle) {
       outer: for (let i = 0; i <= haystack.length - needle.length; i++) {
@@ -68,10 +110,10 @@
 
     function editFile() {
       const mode = parseInt(document.getElementById("mode").value);
-      const value = parseInt(document.getElementById("valueInput").value);
+      const value = parseInt(document.getElementById("valueSelect").value);
 
       if (!buffer || isNaN(mode) || isNaN(value)) {
-        alert("⚠️ Vui lòng chọn chế độ và nhập giá trị.");
+        alert("⚠️ Vui lòng chọn chế độ và giá trị.");
         return;
       }
 
@@ -99,9 +141,9 @@
         a.href = URL.createObjectURL(blob);
         a.download = "Active_edited.sav";
         a.click();
-        alert(`✅ Đã chỉnh ${changed} mục thành giá trị ${value}`);
+        alert(`✅ Đã chỉnh ${changed} mục thành HEX: ${value.toString(16).toUpperCase().padStart(2, '0')}`);
       } else {
-        alert("❌ Không tìm thấy key nào phù hợp.");
+        alert("❌ Không tìm thấy key phù hợp.");
       }
     }
   </script>
