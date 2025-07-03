@@ -2,62 +2,56 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Active.sav Save Editor</title>
+  <title>Active.sav Editor</title>
   <style>
     body { font-family: sans-serif; padding: 20px; }
-    .section { margin-bottom: 15px; }
-    label { font-weight: bold; margin-top: 10px; display: block; }
-    select, input[type="file"], button { padding: 6px; margin-top: 5px; display: block; width: 100%; max-width: 300px; }
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    select, button, input { padding: 6px; margin-top: 5px; max-width: 300px; width: 100%; }
   </style>
 </head>
 <body>
-  <h2>🎮 Active.sav Editor (Giao diện chia mục)</h2>
+  <h2>🎮 Active.sav Editor</h2>
 
-  <div class="section">
-    <label>📁 Tải lên file Active.sav:</label>
-    <input type="file" id="fileInput">
-  </div>
+  <label>📁 Tải file Active.sav:</label>
+  <input type="file" id="fileInput">
 
-  <div class="section">
-    <label>⚙️ FPS:</label>
-    <select id="fpsSelect">
-      <option value="">-- Không chỉnh --</option>
-      <option value="4">30 FPS</option>
-      <option value="5">40 FPS</option>
-      <option value="6">60 FPS</option>
-      <option value="7">90 FPS</option>
-      <option value="8">120 FPS</option>
-    </select>
-  </div>
+  <label>⚙️ FPS:</label>
+  <select id="fpsSelect">
+    <option value="">-- Không chỉnh --</option>
+    <option value="4">30 FPS</option>
+    <option value="5">40 FPS</option>
+    <option value="6">60 FPS</option>
+    <option value="7">90 FPS</option>
+    <option value="8">120 FPS</option>
+  </select>
 
-  <div class="section">
-    <label>🖼️ Đồ hoạ:</label>
-    <select id="qualitySelect">
-      <option value="">-- Không chỉnh --</option>
-      <option value="6">Siêu Mượt</option>
-      <option value="1">Mượt</option>
-      <option value="2">Cân Bằng</option>
-      <option value="3">HD</option>
-      <option value="4">HDR</option>
-      <option value="5">ULTRA HDR</option>
-    </select>
-  </div>
+  <label>🖼️ Đồ hoạ:</label>
+  <select id="qualitySelect">
+    <option value="">-- Không chỉnh --</option>
+    <option value="6">Siêu Mượt</option>
+    <option value="1">Mượt</option>
+    <option value="2">Cân Bằng</option>
+    <option value="3">HD</option>
+    <option value="4">HDR</option>
+    <option value="5">ULTRA HDR</option>
+  </select>
 
-  <div class="section">
-    <label>🌈 Màu sắc:</label>
-    <select id="styleSelect">
-      <option value="">-- Không chỉnh --</option>
-      <option value="1">Kinh điển</option>
-      <option value="2">Nhiều màu</option>
-      <option value="3">Điện ảnh</option>
-      <option value="4">Tự nhiên</option>
-      <option value="5">Rực rỡ</option>
-    </select>
-  </div>
+  <label>🌈 Màu sắc:</label>
+  <select id="styleSelect">
+    <option value="">-- Không chỉnh --</option>
+    <option value="1">Kinh điển</option>
+    <option value="2">Nhiều màu</option>
+    <option value="3">Điện ảnh</option>
+    <option value="4">Tự nhiên</option>
+    <option value="5">Rực rỡ</option>
+  </select>
 
-  <button onclick="editFile()">✅ Chỉnh sửa và Tải file</button>
+  <br><br>
+  <button onclick="editFile()">✅ Chỉnh sửa & Tải về</button>
 
   <script>
+    let buffer, view;
+
     const KEYS = {
       fps: [
         'BattleFPS\u0000\u000C\u0000\u0000\u0000IntProperty',
@@ -74,15 +68,13 @@
       ]
     };
 
-    let buffer, view;
-
     document.getElementById("fileInput").addEventListener("change", function(e) {
       const file = e.target.files[0];
       const reader = new FileReader();
       reader.onload = function(event) {
         buffer = event.target.result;
         view = new DataView(buffer);
-        alert("✅ File đã tải xong!");
+        alert("✅ File đã tải thành công.");
       };
       reader.readAsArrayBuffer(file);
     });
@@ -119,27 +111,26 @@
 
     function editFile() {
       if (!buffer) {
-        alert("❗ Bạn chưa tải file Active.sav.");
+        alert("❗ Bạn chưa chọn file.");
         return;
       }
-
-      let totalChanged = 0;
 
       const fpsVal = parseInt(document.getElementById("fpsSelect").value);
       const qualVal = parseInt(document.getElementById("qualitySelect").value);
       const styleVal = parseInt(document.getElementById("styleSelect").value);
 
-      if (!isNaN(fpsVal)) totalChanged += patch(KEYS.fps, fpsVal);
-      if (!isNaN(qualVal)) totalChanged += patch(KEYS.quality, qualVal);
-      if (!isNaN(styleVal)) totalChanged += patch(KEYS.style, styleVal);
+      let total = 0;
+      if (!isNaN(fpsVal)) total += patch(KEYS.fps, fpsVal);
+      if (!isNaN(qualVal)) total += patch(KEYS.quality, qualVal);
+      if (!isNaN(styleVal)) total += patch(KEYS.style, styleVal);
 
-      if (totalChanged > 0) {
+      if (total > 0) {
         const blob = new Blob([buffer], { type: "application/octet-stream" });
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
         a.download = "Active_edited.sav";
         a.click();
-        alert(`✅ Đã chỉnh ${totalChanged} mục thành công.`);
+        alert(`✅ Đã chỉnh ${total} mục.`);
       } else {
         alert("⚠️ Không có mục nào được chỉnh.");
       }
