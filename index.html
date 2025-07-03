@@ -128,7 +128,7 @@
         const blob = new Blob([buffer], { type: "application/octet-stream" });
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
-        a.download = "Active_edited.sav";
+        a.download = "Active.sav";
         a.click();
         alert(`✅ Đã chỉnh ${total} mục.`);
       } else {
