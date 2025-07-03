@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Active.sav Editor</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input[type="number"] { width: 80px; }
+    label { display: block; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>🎮 Active.sav Editor</h1>
+  <input type="file" id="fileInput"><br><br>
+
+  <div id="editor" style="display:none;">
+    <label>BattleFPS: <input type="number" id="battleFPS"></label>
+    <label>LobbyFPS: <input type="number" id="lobbyFPS"></label>
+    <label>FPSLevel: <input type="number" id="fpsLevel"></label>
+    <label>GraphicsLevel: <input type="number" id="graphicsLevel"></label>
+    <br>
+    <button onclick="saveFile()">💾 Save Edited File</button>
+  </div>
+
+  <script>
+    const KEYS = {
+      battleFPS: 'BattleFPS\u0000\u000C\u0000\u0000\u0000IntProperty',
+      lobbyFPS: 'LobbyFPS\u0000\u000C\u0000\u0000\u0000IntProperty',
+      fpsLevel:  'FPSLevel\u0000\u000C\u0000\u0000\u0000IntProperty',
+      graphicsLevel: 'GraphicsQualityLevel\u0000\u000C\u0000\u0000\u0000IntProperty'
+    };
+
+    let buffer, view;
+
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        buffer = event.target.result;
+        view = new DataView(buffer);
+
+        for (let [id, key] of Object.entries(KEYS)) {
+          const offset = findKeyOffset(buffer, key);
+          if (offset !== -1) {
+            const value = view.getInt32(offset + key.length, true);
+            document.getElementById(id).value = value;
+          }
+        }
+
+        document.getElementById('editor').style.display = 'block';
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    function findKeyOffset(buffer, keyStr) {
+      const bytes = new TextEncoder().encode(keyStr);
+      const arr = new Uint8Array(buffer);
+      for (let i = 0; i < arr.length - bytes.length; i++) {
+        let found = true;
+        for (let j = 0; j < bytes.length; j++) {
+          if (arr[i + j] !== bytes[j]) {
+            found = false;
+            break;
+          }
+        }
+        if (found) return i;
+      }
+      return -1;
+    }
+
+    function saveFile() {
+      for (let [id, key] of Object.entries(KEYS)) {
+        const offset = findKeyOffset(buffer, key);
+        if (offset !== -1) {
+          const newVal = parseInt(document.getElementById(id).value);
+          view.setInt32(offset + key.length, newVal, true);
+        }
+      }
+
+      const blob = new Blob([buffer], { type: 'application/octet-stream' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'Active_edited.sav';
+      a.click();
+    }
+  </script>
+</body>
+</html>
